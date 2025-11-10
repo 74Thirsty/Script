@@ -1,0 +1,100 @@
+#!/usr/bin/env python3
+"""
+AES Whitepaper Builder — Enhanced version.
+Scans the AES source tree and builds a Codex-style technical whitepaper.
+"""
+
+import os
+import yaml
+import ast
+from pathlib import Path
+from datetime import datetime
+
+ROOT = Path(__file__).resolve().parents[1]
+MANIFEST = ROOT / "audits" / "codex_aes_whitepaper.yaml"
+OUTPUT_DIR = ROOT / "docs" / "whitepaper"
+OUTPUT_FILE = OUTPUT_DIR / "AES_Research_Tech_Whitepaper_v1.0.md"
+
+def extract_doc_blocks(base_dir: Path):
+    results = []
+    for py_file in base_dir.rglob("*.py"):
+        try:
+            text = py_file.read_text(encoding="utf-8")
+            tree = ast.parse(text)
+            doc = ast.get_docstring(tree) or ""
+            classes = [n.name for n in tree.body if isinstance(n, ast.ClassDef)]
+            funcs = [n.name for n in tree.body if isinstance(n, ast.FunctionDef)]
+            short_doc = doc.strip().split("\n")[0] if doc else ""
+            results.append((py_file, short_doc, classes, funcs))
+        except Exception as e:
+            results.append((py_file, f"⚠️ Failed to parse: {e}", [], []))
+    return results
+
+
+def summarize_module(doc, classes, funcs, rel):
+    summary = []
+    if "watcher" in str(rel):
+        summary.append("Implements lifecycle transitions and execution logging.")
+    elif "manager" in str(rel):
+        summary.append("Orchestrates shared-state updates and inter-module coordination.")
+    elif "plugin" in str(rel):
+        summary.append("Provides DeFi venue integration via normalized subgraph data and ABI encoding.")
+    elif "env_validator" in str(rel):
+        summary.append("Manages secure environment and keyring precedence for secrets.")
+    if doc:
+        summary.append(doc.split("\n")[0])
+    return " ".join(summary)
+
+
+def main():
+    if not MANIFEST.exists():
+        raise FileNotFoundError(f"Manifest not found: {MANIFEST}")
+    config = yaml.safe_load(MANIFEST.read_text())
+    meta = config.get("meta", {})
+    title = meta.get("title", "AES Research Technical Whitepaper")
+    authors = meta.get("authors", ["Unknown"])
+    style = meta.get("style", "")
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
+    header = f"# {title}\n\n_{style}_  \nAuthor: {', '.join(authors)}  \nDate: {datetime.now():%B %Y}\n\n"
+
+    # --- gather code intel ---
+    code_blocks = []
+    src_root = ROOT / "src"
+    for section in ["utils", "logic", "plugins", "data"]:
+        d = src_root / section
+        if d.exists():
+            code_blocks.extend(extract_doc_blocks(d))
+
+    # --- build sections ---
+    body = []
+    for idx, (key, val) in enumerate(config.get("sections", {}).items(), start=1):
+        body.append(f"## {idx}. {key}\n")
+        if isinstance(val, list):
+            for bullet in val:
+                body.append(f"- {bullet}\n")
+        else:
+            body.append(f"{val}\n")
+
+        # Insert matching code documentation under some key sections
+        if "Architecture" in key or "Pipeline" in key or "Security" in key:
+            body.append("\n### Code Insights\n")
+            for path, doc, classes, funcs in code_blocks:
+                rel = path.relative_to(ROOT)
+                if any(k in rel.parts for k in ["logic", "utils", "plugins", "data"]):
+                    body.append(f"**File:** `{rel}`  \n")
+                    if doc:
+                        body.append(f"> {doc}\n")
+                    if classes:
+                        body.append(f"Classes: {', '.join(classes)}  \n")
+                    if funcs:
+                        body.append(f"Functions: {', '.join(funcs)}  \n")
+                    body.append("\n")
+
+    final_text = header + "\n".join(body)
+    OUTPUT_FILE.write_text(final_text, encoding="utf-8")
+    print(f"✅ AES Whitepaper generated with {len(code_blocks)} analyzed files → {OUTPUT_FILE}")
+
+    
+if __name__ == "__main__":
+    main()
