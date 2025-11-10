@@ -1,0 +1,30 @@
+import { ethers } from "ethers";
+
+// Hardcoded RPC URL and Safe Address
+const RPC_URL = "https://eth-mainnet.g.alchemy.com/v2/RBCHdCUROomscVSMZQeNX9H2MXBknXkQ";
+const safeAddress = "0xC6139506fa54c450948D9D2d8cCf269453A54f17";
+
+// ABI to check if an address is an owner
+const abi = [
+  "function isOwner(address owner) view returns (bool)"
+];
+
+// Set up the provider
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+
+// Create the contract instance
+const safeContract = new ethers.Contract(safeAddress, abi, provider);
+
+// Check if address is owner
+async function isOwner(address) {
+  try {
+    const isOwner = await safeContract.isOwner(address);
+    console.log(`${address} is an owner:`, isOwner);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Test with an example address
+const testAddress = "0xC0efDe592c746447b0C3A0CaDc64dc4FfebF4c69"; // Replace with a valid address
+isOwner(testAddress);
