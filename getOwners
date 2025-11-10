@@ -1,0 +1,31 @@
+import { ethers } from "ethers";  // Correct import for Ethers.js v6+
+
+// Hardcoded RPC URL
+const RPC_URL = "https://eth-mainnet.g.alchemy.com/v2/RBCHdCUROomscVSMZQeNX9H2MXBknXkQ";  // Your Alchemy RPC URL
+
+// The address of your deployed Safe contract
+const safeAddress = "0xC6139506fa54c450948D9D2d8cCf269453A54f17";  // Your deployed Safe address
+
+// ABI to get the owners from the Safe contract
+const abi = [
+  "function getOwners() view returns (address[])"
+];
+
+// Set up the provider using the hardcoded RPC URL
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+
+// Create the contract instance using the ABI and Safe address
+const safeContract = new ethers.Contract(safeAddress, abi, provider);
+
+// Function to get and print the owners
+async function getOwners() {
+  try {
+    const owners = await safeContract.getOwners();
+    console.log("Safe Owners:", owners);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Call the function to get the owners
+getOwners();
