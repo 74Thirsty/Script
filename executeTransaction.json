@@ -1,0 +1,40 @@
+import { ethers } from "ethers";
+
+// Hardcoded RPC URL and Safe Address
+const RPC_URL = "https://eth-mainnet.g.alchemy.com/v2/RBCHdCUROomscVSMZQeNX9H2MXBknXkQ";
+const safeAddress = "0xC6139506fa54c450948D9D2d8cCf269453A54f17";
+
+// ABI for execTransaction
+const abi = [
+  "function execTransaction(address to, uint256 value, bytes data, uint8 operation, uint256 safeTxGas, uint256 baseGas, uint256 gasPrice, address gasToken, address payable refundReceiver, bytes signatures) public returns (bool)"
+];
+
+// Set up the provider and signer
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+const signer = provider.getSigner();
+const safeContract = new ethers.Contract(safeAddress, abi, signer);
+
+// Execute a transaction
+async function execTransaction(to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, signatures) {
+  try {
+    const tx = await safeContract.execTransaction(to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, signatures);
+    await tx.wait();
+    console.log("Transaction executed successfully");
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Example usage
+const to = "0xabcdef1234567890abcdef1234567890abcdef12";  // Destination address
+const value = 0;  // Amount of ETH to send
+const data = "0x";  // Data payload
+const operation = 0;  // Operation type (0 for call, 1 for delegatecall)
+const safeTxGas = 0;  // Gas for the Safe transaction
+const baseGas = 0;  // Base gas cost
+const gasPrice = 20000000000;  // Gas price (in wei)
+const gasToken = "0x0000000000000000000000000000000000000000";  // Token address (0x for ETH)
+const refundReceiver = "0x0000000000000000000000000000000000000000";  // Refund receiver address
+const signatures = "0x";  // Signatures (leave as `0x` if you're testing)
+
+execTransaction(to, value, data, operation, safeTxGas, baseGas, gasPrice, gasToken, refundReceiver, signatures);
