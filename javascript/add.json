@@ -1,0 +1,31 @@
+import { ethers } from "ethers";
+
+// Hardcoded RPC URL and Safe Address
+const RPC_URL = "https://eth-mainnet.g.alchemy.com/v2/RBCHdCUROomscVSMZQeNX9H2MXBknXkQ";
+const safeAddress = "0xC6139506fa54c450948D9D2d8cCf269453A54f17";
+
+// ABI to add an owner
+const abi = [
+  "function addOwner(address newOwner, uint256 _threshold) public"
+];
+
+// Set up the provider and signer
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+const signer = provider.getSigner(); // Assuming you are using a signer for signing the tx
+const safeContract = new ethers.Contract(safeAddress, abi, signer);
+
+// Add a new owner
+async function addOwner(newOwnerAddress, threshold) {
+  try {
+    const tx = await safeContract.addOwner(newOwnerAddress, threshold);
+    await tx.wait();
+    console.log(`Owner ${newOwnerAddress} added successfully`);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Example usage
+const newOwner = "0x1234567890abcdef1234567890abcdef12345678"; // Replace with the address you want to add
+const threshold = 2;  // Set the required threshold for execution
+addOwner(newOwner, threshold);
