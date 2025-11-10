@@ -1,0 +1,31 @@
+import { ethers } from "ethers";
+
+// Hardcoded RPC URL and Safe Address
+const RPC_URL = "https://eth-mainnet.g.alchemy.com/v2/RBCHdCUROomscVSMZQeNX9H2MXBknXkQ";
+const safeAddress = "0xC6139506fa54c450948D9D2d8cCf269453A54f17";
+
+// ABI to remove an owner
+const abi = [
+  "function removeOwner(address currentOwner, uint256 _threshold) public"
+];
+
+// Set up the provider and signer
+const provider = new ethers.JsonRpcProvider(RPC_URL);
+const signer = provider.getSigner();
+const safeContract = new ethers.Contract(safeAddress, abi, signer);
+
+// Remove an owner
+async function removeOwner(currentOwnerAddress, threshold) {
+  try {
+    const tx = await safeContract.removeOwner(currentOwnerAddress, threshold);
+    await tx.wait();
+    console.log(`Owner ${currentOwnerAddress} removed successfully`);
+  } catch (error) {
+    console.error("Error:", error);
+  }
+}
+
+// Example usage
+const ownerToRemove = "0x1234567890abcdef1234567890abcdef12345678"; // Replace with the address you want to remove
+const newThreshold = 2;  // New threshold after removal
+removeOwner(ownerToRemove, newThreshold);
